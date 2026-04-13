@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Floral Botanical Medicine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Admin-specific styles */
+    .admin-header {
+      background: var(--forest);
+      color: var(--cream);
+      padding: .6rem 2rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-header a { color: var(--gold); text-decoration: none; }
+    .admin-header a:hover { text-decoration: underline; }
+
+    .admin-toolbar {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+    .admin-toolbar .btn { padding: .7rem 1.2rem; font-size: 0.78rem; }
+
+    .day-bookings {
+      background: var(--cream-dark);
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      margin-top: 1.2rem;
+    }
+    .day-bookings h3 { margin-bottom: .8rem; }
+    .day-booking-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: .8rem;
+      margin-bottom: .5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .day-booking-item .info { flex: 1; font-size: 0.85rem; line-height: 1.5; }
+    .day-booking-item .time-badge {
+      background: var(--forest);
+      color: var(--cream);
+      padding: .3rem .7rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .booked-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+    .cal-day.has-booking { position: relative; }
+    .cal-day.has-booking::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: .6rem;
+      margin-bottom: 1.6rem;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-card .number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      color: var(--forest);
+      line-height: 1;
+    }
+    .stat-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-soft);
+      margin-top: .3rem;
+    }
+
+    .password-gate {
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .password-gate input {
+      padding: .8rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      font-family: inherit;
+      font-size: 1rem;
+      width: 260px;
+      text-align: center;
+    }
+    .password-gate input:focus { outline: none; border-color: var(--sage); }
+  </style>
+</head>
+<body>
+
+  <div class="admin-header">
+    <span>Admin Panel · Floral Botanical Medicine</span>
+    <a href="index.html">← Client View</a>
+  </div>
+
+  <!-- PASSWORD GATE -->
+  <div id="password-gate" class="password-gate">
+    <h2 style="color: var(--forest);">Admin Access</h2>
+    <p style="font-size: 0.85rem; color: var(--ink-soft);">Enter your admin password to continue.</p>
+    <input type="password" id="admin-pw" placeholder="Password" autofocus />
+    <button class="btn" id="admin-login" style="width:260px;">Enter</button>
+  </div>
+
+  <!-- ADMIN CONTENT (hidden until authenticated) -->
+  <main id="admin-content" class="hidden">
+    <section class="intro">
+      <div class="container center">
+        <p class="eyebrow">Your Calendar</p>
+        <h1>Manage <em>availability</em></h1>
+        <p class="lead">Click any date to block/unblock. Gold dots show days with bookings. Client bookings auto-block their time slots.</p>
+      </div>
+    </section>
+
+    <section class="booking">
+      <div class="container">
+
+        <!-- Stats -->
+        <div class="stats-bar" id="stats-bar"></div>
+
+        <!-- Toolbar -->
+        <div class="admin-toolbar">
+          <button class="btn" id="clear-all">Clear All Blocked Dates</button>
+          <button class="btn" id="export-data" style="background: var(--gold);">Export Data (JSON)</button>
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar">
+          <div class="calendar-header">
+            <button class="cal-nav" id="admin-prev-month">‹</button>
+            <h3 id="admin-month-label"></h3>
+            <button class="cal-nav" id="admin-next-month">›</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="calendar-grid" id="admin-calendar-grid"></div>
+        </div>
+
+        <div class="legend">
+          <span class="dot available"></span> Available
+          <span class="dot blocked"></span> Blocked by you
+          <span class="dot" style="background:var(--gold);"></span> Has booking(s)
+          <span class="dot closed"></span> Closed
+        </div>
+
+        <!-- Day detail (shows when you click a date) -->
+        <div id="day-detail" class="day-bookings hidden">
+          <h3 id="day-detail-title">Bookings for —</h3>
+          <div id="day-detail-list"></div>
+          <div id="day-detail-empty" class="note">No bookings on this date.</div>
+        </div>
+
+        <!-- All bookings -->
+        <h3 class="bookings-title" style="margin-top:2rem;">All Booking Requests</h3>
+        <p class="note">Bookings are stored in this browser's localStorage. Export regularly to keep a backup.</p>
+        <div id="bookings-list" class="bookings-list"></div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container center">
+      <p>Floral Botanical Medicine · Admin Panel</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    /* ============ ADMIN PAGE LOGIC ============ */
+
+    // Password gate
+    const pwInput = document.getElementById('admin-pw');
+    const loginBtn = document.getElementById('admin-login');
+    const gate = document.getElementById('password-gate');
+    const content = document.getElementById('admin-content');
+
+    function tryLogin() {
+      if (pwInput.value === CONFIG.adminPassword) {
+        gate.classList.add('hidden');
+        content.classList.remove('hidden');
+        initAdmin();
+      } else {
+        alert('Incorrect password.');
+        pwInput.value = '';
+        pwInput.focus();
+      }
+    }
+    loginBtn.addEventListener('click', tryLogin);
+    pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+    // Admin state
+    const adminMonth = { current: new Date() };
+    let selectedAdminDate = null;
+
+    function initAdmin() {
+      renderAdminCal();
+      renderAllBookings();
+      renderStats();
+    }
+
+    // Stats
+    function renderStats() {
+      const bookings = getBookings();
+      const blocked = getBlockedDates();
+      const today = new Date();
+      const upcoming = bookings.filter(b => {
+        const d = new Date(b.date);
+        return d >= today;
+      });
+      const revenue = upcoming.reduce((sum, b) => sum + (b.price || 0), 0);
+
+      document.getElementById('stats-bar').innerHTML = `
+        <div class="stat-card">
+          <div class="number">${bookings.length}</div>
+          <div class="label">Total Bookings</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">${upcoming.length}</div>
+          <div class="label">Upcoming</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">${blocked.length}</div>
+          <div class="label">Days Blocked</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">$${revenue}</div>
+          <div class="label">Upcoming Revenue</div>
+        </div>
+      `;
+    }
+
+    // Admin calendar with booking dots
+    function renderAdminCal() {
+      const grid = document.getElementById('admin-calendar-grid');
+      const label = document.getElementById('admin-month-label');
+      grid.innerHTML = '';
+
+      const year = adminMonth.current.getFullYear();
+      const month = adminMonth.current.getMonth();
+      label.textContent = formatMonth(adminMonth.current);
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startPad = firstDay.getDay();
+
+      const bookings = getBookings();
+      // Build a set of dates that have bookings
+      const bookedDates = new Set();
+      bookings.forEach(b => {
+        // b.date is a formatted string like "Monday, January 5, 2026"
+        // We need to parse it back
+        const d = new Date(b.date);
+        if (!isNaN(d)) bookedDates.add(dateKey(d));
+      });
+
+      for (let i = 0; i < startPad; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const d = new Date(year, month, day);
+        const key = dateKey(d);
+        const cell = document.createElement('button');
+        cell.className = 'cal-day';
+        cell.textContent = day;
+
+        const isWorkingDay = CONFIG.workingDays.includes(d.getDay());
+        const blocked = isBlocked(key);
+        const hasBooking = bookedDates.has(key);
+        const isToday = dateKey(d) === dateKey(new Date());
+
+        if (isToday) cell.classList.add('today');
+        if (!isWorkingDay) cell.classList.add('disabled');
+        if (blocked) cell.classList.add('admin-blocked');
+        if (hasBooking) cell.classList.add('has-booking');
+
+        if (isWorkingDay) {
+          cell.addEventListener('click', () => {
+            // Toggle block
+            toggleBlocked(key);
+            renderAdminCal();
+            // Show day detail
+            showDayDetail(d, key);
+          });
+          // Right-click to just view bookings without toggling
+          cell.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            showDayDetail(d, key);
+          });
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function showDayDetail(date, key) {
+      const detail = document.getElementById('day-detail');
+      const title = document.getElementById('day-detail-title');
+      const list = document.getElementById('day-detail-list');
+      const emptyMsg = document.getElementById('day-detail-empty');
+
+      detail.classList.remove('hidden');
+      title.textContent = 'Bookings for ' + formatDate(date);
+
+      const bookings = getBookings().filter(b => {
+        const d = new Date(b.date);
+        return !isNaN(d) && dateKey(d) === key;
+      });
+
+      list.innerHTML = '';
+      if (bookings.length === 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+        bookings.forEach(b => {
+          const item = document.createElement('div');
+          item.className = 'day-booking-item';
+          item.innerHTML = `
+            <span class="time-badge">${b.time}</span>
+            <div class="info">
+              <strong>${b.name}</strong> — ${b.service}<br>
+              ${b.email}${b.phone ? ' · ' + b.phone : ''}
+              ${b.notes ? '<br><em>"' + b.notes + '"</em>' : ''}
+            </div>
+          `;
+          list.appendChild(item);
+        });
+      }
+    }
+
+    // All bookings list
+    function renderAllBookings() {
+      const list = document.getElementById('bookings-list');
+      const bookings = getBookings();
+      if (bookings.length === 0) {
+        list.innerHTML = '<p class="note">No booking requests yet.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      bookings.forEach((b, i) => {
+        const item = document.createElement('div');
+        item.className = 'booking-item';
+        item.innerHTML = `
+          <div>
+            <div class="when">${b.date} · ${b.time}</div>
+            <div class="who"><strong>${b.name}</strong> — ${b.service} · $${b.price || '—'}</div>
+            <div style="font-size: 0.85rem; color: var(--ink-soft); margin-top: .3rem;">
+              ${b.email}${b.phone ? ' · ' + b.phone : ''}
+            </div>
+            ${b.notes ? '<div style="font-size: 0.85rem; margin-top: .4rem; font-style: italic;">"' + b.notes + '"</div>' : ''}
+          </div>
+          <button class="delete" data-idx="${i}">Remove</button>
+        `;
+        list.appendChild(item);
+      });
+      list.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!confirm('Remove this booking?')) return;
+          const idx = parseInt(btn.dataset.idx);
+          const bookings = getBookings();
+          bookings.splice(idx, 1);
+          localStorage.setItem('fbm_bookings', JSON.stringify(bookings));
+          renderAllBookings();
+          renderAdminCal();
+          renderStats();
+        });
+      });
+    }
+
+    // Navigation
+    document.getElementById('admin-prev-month').addEventListener('click', () => {
+      adminMonth.current = new Date(adminMonth.current.getFullYear(), adminMonth.current.getMonth() - 1, 1);
+      renderAdminCal();
+    });
+    document.getElementById('admin-next-month').addEventListener('click', () => {
+      adminMonth.current = new Date(adminMonth.current.getFullYear(), adminMonth.current.getMonth() + 1, 1);
+      renderAdminCal();
+    });
+
+    // Clear all
+    document.getElementById('clear-all').addEventListener('click', () => {
+      if (confirm('Clear ALL blocked dates?')) {
+        setBlockedDates([]);
+        renderAdminCal();
+      }
+    });
+
+    // Export data
+    document.getElementById('export-data').addEventListener('click', () => {
+      const data = {
+        blockedDates: getBlockedDates(),
+        bookings: getBookings(),
+        exportedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.download = 'fbm-bookings-' + dateKey(new Date()) + '.json';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
+
+    // Override the init from script.js (don't run client-side init on admin page)
+    // The script.js init() already ran, but that's fine — admin page doesn't have #client-view
+  </script>
+</body>
+</html>

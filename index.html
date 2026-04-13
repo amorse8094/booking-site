@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book an Appointment · Floral Botanical Medicine</title>
+  <meta name="description" content="Book a consultation with Floral Botanical Medicine — herbal and botanical wellness." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand">Floral Botanical Medicine</a>
+      <nav class="site-nav">
+        <a href="https://floralbotanicalmedicine.com" target="_blank">← Back to site</a>
+        <span class="nav-divider">·</span>
+        <span id="nav-auth">
+          <button class="nav-auth-btn" id="nav-signin-btn">Sign In</button>
+        </span>
+        <span id="nav-member" class="hidden">
+          <button class="nav-auth-btn" id="nav-my-appts-btn">My Appointments</button>
+          <span id="nav-creator-controls" class="hidden">
+            <span class="nav-divider">·</span>
+            <button class="nav-auth-btn creator-accent" id="nav-admin-toggle">Admin Mode</button>
+          </span>
+          <span class="nav-divider">·</span>
+          <button class="nav-auth-btn" id="nav-signout-btn">Sign Out</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CLIENT BOOKING VIEW -->
+  <main id="client-view" class="client-view">
+    <section class="intro">
+      <div class="container center">
+        <p class="eyebrow">Schedule a Session</p>
+        <h1>Book your <em>appointment</em></h1>
+        <p class="lead">Healing is a lifelong journey, not a quick fix. Select a time that works for you and we'll begin together.</p>
+      </div>
+    </section>
+
+    <section class="booking">
+      <div class="container">
+
+        <!-- Step 1: Service -->
+        <div class="step" id="step-service">
+          <p class="step-label">01 · Select Your Session</p>
+          <div class="service-grid" id="service-grid"></div>
+        </div>
+
+        <!-- Step 2: Calendar -->
+        <div class="step hidden" id="step-date">
+          <p class="step-label">02 · Choose a Date</p>
+          <div class="calendar">
+            <div class="calendar-header">
+              <button class="cal-nav" id="prev-month" aria-label="Previous month">‹</button>
+              <h3 id="month-label"></h3>
+              <button class="cal-nav" id="next-month" aria-label="Next month">›</button>
+            </div>
+            <div class="calendar-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+          <button class="btn-link back-btn" data-back="step-service">← Change session</button>
+        </div>
+
+        <!-- Step 3: Time -->
+        <div class="step hidden" id="step-time">
+          <p class="step-label">03 · Choose a Time</p>
+          <p class="selected-date" id="selected-date-label"></p>
+          <div class="time-grid" id="time-grid"></div>
+          <button class="btn-link back-btn" data-back="step-date">← Change date</button>
+        </div>
+
+        <!-- Step 4: Details -->
+        <div class="step hidden" id="step-details">
+          <p class="step-label">04 · Your Details</p>
+          <div class="summary-box" id="summary-box"></div>
+          <form id="booking-form" class="booking-form">
+            <label>
+              <span>Full Name</span>
+              <input type="text" name="name" required />
+            </label>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" required />
+            </label>
+            <label>
+              <span>Phone</span>
+              <input type="tel" name="phone" />
+            </label>
+            <label>
+              <span>What brings you in? (optional)</span>
+              <textarea name="notes" rows="4" placeholder="Share anything you'd like me to know before our session..."></textarea>
+            </label>
+            <button type="submit" class="btn">Request Appointment</button>
+            <button type="button" class="btn-link back-btn" data-back="step-time">← Change time</button>
+          </form>
+        </div>
+
+        <!-- Step 5: Confirmation -->
+        <div class="step hidden" id="step-done">
+          <div class="done-card">
+            <p class="eyebrow">Appointment Requested</p>
+            <h2>Thank you, <em><span id="done-name"></span></em>.</h2>
+            <p>Your booking request has been opened in your email client. Please send it to confirm.</p>
+            <p class="done-details" id="done-details"></p>
+            <button type="button" class="btn" onclick="resetFlow()">Book another</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Admin is now at admin.html -->
+
+  <!-- CREATOR ADMIN PANEL (visible only when creator toggles admin mode) -->
+  <section id="creator-panel" class="creator-panel hidden">
+    <div class="container">
+      <div class="creator-banner">
+        <p class="eyebrow">Creator Mode</p>
+        <h2>Manage your <em>calendar</em></h2>
+        <p class="lead">Click dates to block/unblock. Click booked dates to see details. Manage all appointments below.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar" id="creator-stats-bar"></div>
+
+      <!-- Toolbar -->
+      <div class="creator-toolbar">
+        <button class="btn" id="creator-clear-blocked">Clear All Blocked Dates</button>
+        <button class="btn btn-gold" id="creator-export">Export Data (JSON)</button>
+      </div>
+
+      <!-- Admin Calendar -->
+      <div class="calendar">
+        <div class="calendar-header">
+          <button class="cal-nav" id="creator-prev-month">&#8249;</button>
+          <h3 id="creator-month-label"></h3>
+          <button class="cal-nav" id="creator-next-month">&#8250;</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="calendar-grid" id="creator-calendar-grid"></div>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot available"></span> Available</span>
+        <span><span class="dot blocked"></span> Blocked by you</span>
+        <span><span class="dot has-booking-dot"></span> Has booking(s)</span>
+        <span><span class="dot closed"></span> Closed</span>
+      </div>
+
+      <!-- Day detail panel -->
+      <div id="creator-day-detail" class="day-bookings hidden">
+        <h3 id="creator-day-title">Bookings for &mdash;</h3>
+        <div id="creator-day-list"></div>
+        <p id="creator-day-empty" class="note">No bookings on this date.</p>
+
+        <!-- Block specific time slots -->
+        <div class="block-time-section">
+          <h4>Block a Time Slot</h4>
+          <div class="block-time-row">
+            <select id="creator-block-time-select"></select>
+            <button class="btn btn-small" id="creator-block-time-btn">Block Time</button>
+          </div>
+          <div id="creator-blocked-times-list"></div>
+        </div>
+      </div>
+
+      <!-- All bookings -->
+      <h3 class="bookings-title">All Booking Requests</h3>
+      <p class="note">Bookings are stored in this browser's localStorage. Export regularly to keep a backup.</p>
+      <div id="creator-bookings-list" class="bookings-list"></div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container center">
+      <p>Floral Botanical Medicine · Handcrafted with care</p>
+      <p style="margin-top:.3rem;"><a href="admin.html" style="font-size:0.7rem; color:var(--border); text-decoration:none;">·</a></p>
+    </div>
+  </footer>
+
+  <!-- CHATBOT -->
+  <button id="chat-toggle" class="chat-toggle" aria-label="Open chat">
+    <span class="chat-icon">✿</span>
+    <span class="chat-label">Ask Me</span>
+  </button>
+
+  <div id="chat-window" class="chat-window hidden">
+    <div class="chat-header">
+      <div>
+        <h4>Botanical Assistant</h4>
+        <p class="chat-status">Typically replies instantly</p>
+      </div>
+      <button id="chat-close" class="chat-close" aria-label="Close chat">×</button>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div id="chat-quick-replies" class="chat-quick-replies"></div>
+    <form id="chat-form" class="chat-form">
+      <input
+        type="text"
+        id="chat-input"
+        placeholder="Ask a question..."
+        autocomplete="off"
+        required
+      />
+      <button type="submit" aria-label="Send">→</button>
+    </form>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div id="auth-overlay" class="auth-overlay hidden">
+    <div class="auth-modal">
+      <button class="auth-close" id="auth-close-btn">&times;</button>
+
+      <!-- SIGN IN TAB -->
+      <div id="auth-signin" class="auth-tab">
+        <p class="eyebrow">Welcome Back</p>
+        <h2>Sign <em>in</em></h2>
+        <form id="signin-form" class="auth-form">
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" required />
+          </label>
+          <p class="auth-error hidden" id="signin-error"></p>
+          <button type="submit" class="btn" style="width:100%;">Sign In</button>
+        </form>
+        <p class="auth-switch">Don't have an account? <button class="btn-link" id="show-signup">Create one</button></p>
+      </div>
+
+      <!-- SIGN UP TAB -->
+      <div id="auth-signup" class="auth-tab hidden">
+        <p class="eyebrow">New Here?</p>
+        <h2>Create your <em>account</em></h2>
+        <form id="signup-form" class="auth-form">
+          <label>
+            <span>Full Name</span>
+            <input type="text" name="name" required />
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" required />
+          </label>
+          <label>
+            <span>Phone (optional)</span>
+            <input type="tel" name="phone" />
+          </label>
+          <label>
+            <span>Password</span>
+            <input type="password" name="password" minlength="6" required />
+          </label>
+          <label>
+            <span>Confirm Password</span>
+            <input type="password" name="confirm" minlength="6" required />
+          </label>
+          <div class="creator-code-section">
+            <label>
+              <span>Creator Code <small>(leave blank for a regular account)</small></span>
+              <input type="text" name="creator_code" placeholder="Only if you're the site owner" />
+            </label>
+          </div>
+          <p class="auth-error hidden" id="signup-error"></p>
+          <button type="submit" class="btn" style="width:100%;">Create Account</button>
+        </form>
+        <p class="auth-switch">Already have an account? <button class="btn-link" id="show-signin">Sign in</button></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY APPOINTMENTS PANEL -->
+  <div id="my-appts-overlay" class="auth-overlay hidden">
+    <div class="auth-modal" style="max-width:580px;">
+      <button class="auth-close" id="appts-close-btn">&times;</button>
+      <p class="eyebrow">Your Account</p>
+      <h2>My <em>Appointments</em></h2>
+      <p id="member-greeting" style="margin-bottom:1.6rem;"></p>
+      <div id="my-appts-list"></div>
+    </div>
+  </div>
+
+  <!-- EDIT BOOKING MODAL (creator only) -->
+  <div id="edit-booking-overlay" class="edit-booking-overlay hidden">
+    <div class="edit-booking-modal">
+      <button class="auth-close" id="edit-booking-close">&times;</button>
+      <p class="eyebrow">Edit Booking</p>
+      <h2>Update <em>details</em></h2>
+      <form id="edit-booking-form" class="auth-form" style="margin-top:1.2rem;">
+        <input type="hidden" name="idx" />
+        <label>
+          <span>Client Name</span>
+          <input type="text" name="name" required />
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          <span>Phone</span>
+          <input type="tel" name="phone" />
+        </label>
+        <label>
+          <span>Service</span>
+          <select name="service"></select>
+        </label>
+        <label>
+          <span>Date</span>
+          <input type="date" name="date" required />
+        </label>
+        <label>
+          <span>Time</span>
+          <input type="time" name="time" required />
+        </label>
+        <label>
+          <span>Notes</span>
+          <textarea name="notes" rows="3"></textarea>
+        </label>
+        <button type="submit" class="btn" style="width:100%;">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
