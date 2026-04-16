@@ -1,0 +1,11 @@
+{
+  "name": "booking-site",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "pg": "^8.13.1",
+    "resend": "^4.0.1"
+  }
+}

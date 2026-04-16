@@ -26,28 +26,59 @@ const CONFIG = {
   // HOW FAR IN ADVANCE CLIENTS CAN BOOK (days)
   maxDaysAhead: 90,
 
-  // SERVICES OFFERED
+  // SERVICES OFFERED — pulled from The Menu
   services: [
+    // PILLAR I — THE ANALYSIS
     {
-      id: 'initial',
-      name: 'Initial Consultation',
-      duration: 60, // minutes
-      price: 250,
-      description: 'A deep, first-time conversation to understand your health story, goals, and create a botanical plan tailored to you.',
-    },
-    {
-      id: 'blood-analysis',
-      name: 'Microscope Live Blood Analysis',
+      id: 'private-consultation',
+      name: 'The Private Consultation',
       duration: 60,
-      price: 350,
-      description: 'A powerful diagnostic session using live blood microscopy to reveal insights about your cellular health, nutrition, and overall vitality.',
+      price: 285,
+      description: 'A one-to-one intake with your practitioner to map the story your body is telling. We look at the microbiome, the liver, the nervous system, the nutritional terrain, and the quiet stressors — emotional and environmental — that have shaped you. You leave with a clear, personalized protocol. Sixty minutes · In-clinic or virtual · By appointment.',
     },
     {
-      id: 'followup',
-      name: 'Follow-Up Session',
+      id: 'living-blood-analysis',
+      name: 'The Living Blood Analysis',
       duration: 45,
-      price: 140,
-      description: 'Ongoing support — review progress, adjust protocols, and deepen your healing journey.',
+      price: 245,
+      description: 'A single drop of blood, a laboratory-grade microscope, and the ability to see — in real time — what is actually happening inside you. We review the findings together, on screen. The most intimate portrait of your internal terrain we can offer. Forty-five minutes · In-clinic only.',
+    },
+
+    // PILLAR II — THE PROTOCOLS
+    {
+      id: 'reset-protocols',
+      name: 'The Reset Protocols',
+      duration: 60,
+      price: '185 – 895',
+      description: 'A curated series of organ-focused cleanses — kidney, colon, liver + gallbladder, and full-body metals — administered in the order your terrain requires, never as a one-size formula. For the woman committed to beginning again. Three to twenty-one days, depending on protocol · Custom. Booking begins with a sixty-minute intake.',
+    },
+    {
+      id: 'at-home-reset',
+      name: 'The At-Home Reset',
+      duration: 60,
+      price: '245 – 585',
+      description: 'A complete at-home detox, curated and shipped. For the woman who prefers to do this quietly — in her own kitchen, on her own timeline. Each kit includes hand-selected botanicals, supplements, and a printed ritual guide, sequenced over the course of the protocol. A brief intake call precedes every shipment, so the formula is built to your terrain, not a template. Seven to twenty-one days · Shipped, with virtual intake · Optional weekly check-ins.',
+    },
+    {
+      id: 'biomodulation',
+      name: 'The BioModulation Session',
+      duration: 45,
+      price: 195,
+      description: 'Dr. Tennant\u2019s BioModulator and BioTransducer work in tandem to restore cellular polarity — the electrical signaling your body uses to repair itself. Indicated for pain, skin laxity, fatigue, scarring, and post-surgical recovery. Deeply restful, non-invasive, clinically validated. Forty-five minutes · In-clinic · Series of five $895.',
+    },
+    {
+      id: 'ozone-therapy',
+      name: 'The Ozone Therapy',
+      duration: 60,
+      price: '145 – 325',
+      description: 'Medical-grade ozone — administered as ozonated water, topical oils, or insufflation — to oxygenate tissue, support the immune terrain, and accelerate the body\u2019s own repair. Selected per protocol during consultation. Thirty to sixty minutes · In-clinic.',
+    },
+    {
+      id: 'contour-lift',
+      name: 'The Contour & Lift — Forthcoming',
+      duration: 90,
+      price: '285 – 395',
+      description: 'A non-invasive sculpting and lifting session combining microcurrent, radiofrequency, EMS, cavitation, and cupping. Smooths, tightens, restores — on the body and the face — through cellular, not cosmetic, methods. No downtime, no injectables, no compromise. Sixty to ninety minutes · In-clinic · Series of six $1,650.',
     },
   ],
 
@@ -392,36 +423,41 @@ function resetFlow() {
 }
 
 /* ------------------------------------------------------------------
-   MEMBER AUTH (localStorage-based accounts)
+   MEMBER AUTH (API-backed, server-side accounts in Postgres)
+   Session lives in an httpOnly cookie set by /api/signin and /api/signup.
+   In-memory cache of the current user, refreshed via /api/me on load.
    ------------------------------------------------------------------ */
-function getMembers() {
-  return JSON.parse(localStorage.getItem('fbm_members') || '[]');
+let _currentMember = null;
+
+async function refreshCurrentMember() {
+  try {
+    const r = await fetch('/api/me', { credentials: 'same-origin' });
+    if (!r.ok) { _currentMember = null; return null; }
+    const data = await r.json();
+    _currentMember = data.user || null;
+    return _currentMember;
+  } catch {
+    _currentMember = null;
+    return null;
+  }
 }
-function saveMember(member) {
-  const members = getMembers();
-  members.push(member);
-  localStorage.setItem('fbm_members', JSON.stringify(members));
-}
-function findMember(email) {
-  return getMembers().find(m => m.email.toLowerCase() === email.toLowerCase());
-}
-function getCurrentMember() {
-  const email = sessionStorage.getItem('fbm_current_member');
-  return email ? findMember(email) : null;
-}
-function setCurrentMember(email) {
-  sessionStorage.setItem('fbm_current_member', email);
-}
-function clearCurrentMember() {
-  sessionStorage.removeItem('fbm_current_member');
+function getCurrentMember() { return _currentMember; }
+function setCurrentMemberCache(user) { _currentMember = user; }
+async function clearCurrentMember() {
+  _currentMember = null;
+  try { await fetch('/api/signout', { method: 'POST', credentials: 'same-origin' }); } catch {}
 }
 
-// Simple hash for password storage (not cryptographically secure, but
-// avoids storing plaintext in localStorage for a static site)
-async function hashPassword(pw) {
-  const data = new TextEncoder().encode(pw);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+async function apiPost(path, body) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  });
+  let data = {};
+  try { data = await r.json(); } catch {}
+  return { ok: r.ok, status: r.status, data };
 }
 
 function isCreator() {
@@ -492,8 +528,8 @@ function initAuth() {
 
   // Nav buttons
   document.getElementById('nav-signin-btn').addEventListener('click', () => openModal(signinTab));
-  document.getElementById('nav-signout-btn').addEventListener('click', () => {
-    clearCurrentMember();
+  document.getElementById('nav-signout-btn').addEventListener('click', async () => {
+    await clearCurrentMember();
     adminModeActive = false;
     refreshAuthUI();
   });
@@ -514,33 +550,21 @@ function initAuth() {
     const phone = fd.get('phone').trim();
     const pw    = fd.get('password');
     const confirm = fd.get('confirm');
+    const creator_code = (fd.get('creator_code') || '').trim();
 
     if (pw !== confirm) {
       signupError.textContent = 'Passwords do not match.';
       signupError.classList.remove('hidden');
       return;
     }
-    if (findMember(email)) {
-      signupError.textContent = 'An account with this email already exists.';
+
+    const { ok, data } = await apiPost('/api/signup', { email, name, phone, password: pw, creator_code });
+    if (!ok) {
+      signupError.textContent = data.error || 'Could not create account.';
       signupError.classList.remove('hidden');
       return;
     }
-
-    const creatorCode = (fd.get('creator_code') || '').trim();
-    let role = 'member';
-    if (creatorCode) {
-      if (creatorCode === CONFIG.adminPassword) {
-        role = 'creator';
-      } else {
-        signupError.textContent = 'Invalid creator code.';
-        signupError.classList.remove('hidden');
-        return;
-      }
-    }
-
-    const hashed = await hashPassword(pw);
-    saveMember({ name, email, phone, role, passwordHash: hashed, createdAt: new Date().toISOString() });
-    setCurrentMember(email);
+    setCurrentMemberCache(data.user);
     signupForm.reset();
     closeModal();
     refreshAuthUI();
@@ -554,26 +578,62 @@ function initAuth() {
     const fd = new FormData(signinForm);
     const email = fd.get('email').trim();
     const pw    = fd.get('password');
-    const member = findMember(email);
 
-    if (!member) {
-      signinError.textContent = 'No account found with this email.';
+    const { ok, data } = await apiPost('/api/signin', { email, password: pw });
+    if (!ok) {
+      signinError.textContent = data.error || 'Could not sign in.';
       signinError.classList.remove('hidden');
       return;
     }
-    const hashed = await hashPassword(pw);
-    if (hashed !== member.passwordHash) {
-      signinError.textContent = 'Incorrect password.';
-      signinError.classList.remove('hidden');
-      return;
-    }
-
-    setCurrentMember(email);
+    setCurrentMemberCache(data.user);
     signinForm.reset();
     closeModal();
     refreshAuthUI();
     prefillBookingForm();
   });
+
+  // Forgot Password
+  const forgotLink = document.getElementById('show-forgot');
+  const forgotTab = document.getElementById('auth-forgot');
+  const forgotForm = document.getElementById('forgot-form');
+  const forgotMsg = document.getElementById('forgot-msg');
+  if (forgotLink && forgotTab && forgotForm) {
+    forgotLink.addEventListener('click', () => {
+      signinTab.classList.add('hidden');
+      signupTab.classList.add('hidden');
+      forgotTab.classList.remove('hidden');
+      forgotMsg.textContent = '';
+      forgotMsg.className = 'auth-msg hidden';
+    });
+    document.getElementById('forgot-back')?.addEventListener('click', () => openModal(signinTab));
+    forgotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      forgotMsg.className = 'auth-msg';
+      forgotMsg.textContent = '';
+      const fd = new FormData(forgotForm);
+      const email = fd.get('email').trim();
+      const btn = forgotForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Sending…';
+      const { ok, data } = await apiPost('/api/request-reset', { email });
+      btn.disabled = false;
+      btn.textContent = originalText;
+      if (!ok) {
+        forgotMsg.classList.add('error');
+        forgotMsg.textContent = data.error || 'Could not process the request.';
+        return;
+      }
+      if (data.email_disabled) {
+        forgotMsg.classList.add('success');
+        forgotMsg.innerHTML = `Self-serve email reset isn't enabled yet. Please contact <a href="mailto:${data.contact_email}" style="color:inherit; text-decoration:underline;">${data.contact_email}</a> and we'll reset your password manually.`;
+      } else {
+        forgotMsg.classList.add('success');
+        forgotMsg.textContent = 'If an account exists for that email, a reset link is on the way. Check your inbox.';
+      }
+      forgotForm.reset();
+    });
+  }
 
   // My Appointments
   document.getElementById('nav-my-appts-btn').addEventListener('click', () => {
@@ -595,6 +655,35 @@ function initAuth() {
     }
     apptsOverlay.classList.remove('hidden');
   });
+  // Change password form (inside My Appointments panel)
+  const changePwForm = document.getElementById('change-pw-form');
+  const changePwMsg = document.getElementById('change-pw-msg');
+  if (changePwForm) {
+    changePwForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      changePwMsg.className = 'auth-msg';
+      changePwMsg.textContent = '';
+      const fd = new FormData(changePwForm);
+      const current = fd.get('current_password');
+      const next = fd.get('new_password');
+      const confirm = fd.get('confirm_password');
+      if (next !== confirm) {
+        changePwMsg.classList.add('error');
+        changePwMsg.textContent = 'New passwords do not match.';
+        return;
+      }
+      const { ok, data } = await apiPost('/api/change-password', { current_password: current, new_password: next });
+      if (!ok) {
+        changePwMsg.classList.add('error');
+        changePwMsg.textContent = data.error || 'Could not change password.';
+        return;
+      }
+      changePwMsg.classList.add('success');
+      changePwMsg.textContent = 'Password updated.';
+      changePwForm.reset();
+    });
+  }
+
   document.getElementById('appts-close-btn').addEventListener('click', () => {
     apptsOverlay.classList.add('hidden');
   });
@@ -1072,7 +1161,7 @@ function prefillBookingForm() {
 /* ------------------------------------------------------------------
    INIT
    ------------------------------------------------------------------ */
-function init() {
+async function init() {
   // If on admin page, skip client init
   if (!document.getElementById('client-view')) return;
 
@@ -1083,6 +1172,7 @@ function init() {
     return;
   }
 
+  await refreshCurrentMember();
   renderServices();
   initAuth();
 }

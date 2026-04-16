@@ -960,6 +960,22 @@ p { color: var(--ink-soft); }
   margin: 0;
 }
 
+.auth-msg {
+  font-size: 0.88rem;
+  margin: .8rem 0 0;
+  padding: .6rem .8rem;
+  border-radius: 2px;
+  line-height: 1.45;
+}
+.auth-msg.success {
+  color: var(--deep-sage, #3f5a3a);
+  background: rgba(63, 90, 58, 0.08);
+}
+.auth-msg.error {
+  color: var(--error);
+  background: rgba(138, 58, 26, 0.08);
+}
+
 .auth-switch {
   margin-top: 1.6rem;
   font-size: 0.85rem;

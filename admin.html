@@ -124,6 +124,165 @@
       text-align: center;
     }
     .password-gate input:focus { outline: none; border-color: var(--sage); }
+
+    /* Vivant schedule embed */
+    .vivant-section {
+      margin-top: 2.4rem;
+      background: var(--cream-dark);
+      border: 1px solid var(--border);
+      padding: 1.4rem;
+    }
+    .vivant-section .vivant-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: .6rem;
+      margin-bottom: 1rem;
+    }
+    .vivant-section h3 { margin: 0; }
+    .vivant-section .vivant-meta {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.04em;
+    }
+    .vivant-section .vivant-meta a { color: var(--forest); }
+    .vivant-frame-wrap {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      height: 720px;
+    }
+    .vivant-frame-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .vivant-toggle {
+      background: none;
+      border: 1px solid var(--forest);
+      color: var(--forest);
+      padding: .4rem .9rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .vivant-toggle:hover { background: var(--forest); color: var(--cream); }
+
+    /* Quick-block form */
+    .quick-block {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 1rem 1.2rem;
+      margin-top: 1rem;
+    }
+    .quick-block h4 {
+      margin: 0 0 .2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      color: var(--forest);
+      font-size: 1.15rem;
+    }
+    .quick-block .hint {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin: 0 0 .8rem;
+    }
+    .quick-block .row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr auto;
+      gap: .5rem;
+      align-items: end;
+    }
+    .quick-block label {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: .25rem;
+    }
+    .quick-block input {
+      width: 100%;
+      padding: .55rem .6rem;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .quick-block .btn-block {
+      padding: .6rem 1rem;
+      background: var(--forest);
+      color: var(--cream);
+      border: 0;
+      font-family: inherit;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .quick-block .btn-block:hover { background: #2a3d27; }
+    .quick-block .feedback {
+      font-size: 0.82rem;
+      color: var(--forest);
+      margin-top: .6rem;
+      min-height: 1.1em;
+    }
+    .quick-block .feedback.error { color: #8a3a1a; }
+
+    .blocked-times-list {
+      margin-top: 1rem;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 1rem 1.2rem;
+    }
+    .blocked-times-list h4 {
+      margin: 0 0 .6rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 500;
+      color: var(--forest);
+      font-size: 1.15rem;
+    }
+    .blocked-times-list .empty {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+    .blocked-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: .8rem;
+      padding: .5rem 0;
+      border-bottom: 1px dotted var(--border);
+      font-size: 0.88rem;
+    }
+    .blocked-row:last-child { border-bottom: 0; }
+    .blocked-row .when { flex: 1; }
+    .blocked-row .when .date { font-weight: 600; color: var(--forest); }
+    .blocked-row .slots { color: var(--ink-soft); font-size: 0.82rem; }
+    .blocked-row button {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--ink-soft);
+      padding: .3rem .7rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .blocked-row button:hover { border-color: #8a3a1a; color: #8a3a1a; }
+
+    @media (max-width: 600px) {
+      .quick-block .row { grid-template-columns: 1fr 1fr; }
+      .quick-block .btn-block { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
@@ -133,12 +292,21 @@
     <a href="index.html">← Client View</a>
   </div>
 
-  <!-- PASSWORD GATE -->
+  <!-- AUTH GATE (session-based, must be signed in as creator) -->
   <div id="password-gate" class="password-gate">
     <h2 style="color: var(--forest);">Admin Access</h2>
-    <p style="font-size: 0.85rem; color: var(--ink-soft);">Enter your admin password to continue.</p>
-    <input type="password" id="admin-pw" placeholder="Password" autofocus />
-    <button class="btn" id="admin-login" style="width:260px;">Enter</button>
+    <p id="gate-message" style="font-size: 0.9rem; color: var(--ink-soft); text-align:center; max-width: 360px;">
+      Checking your session…
+    </p>
+    <form id="admin-signin-form" class="hidden" style="display:flex; flex-direction:column; gap:.6rem; width:280px;">
+      <input type="email" id="admin-email" placeholder="Email" autocomplete="username" required />
+      <input type="password" id="admin-pw" placeholder="Password" autocomplete="current-password" required />
+      <button class="btn" type="submit" style="width:100%;">Sign In</button>
+      <p id="admin-signin-error" style="color: #8a3a1a; font-size:0.85rem; min-height:1em;"></p>
+    </form>
+    <p id="gate-help" class="hidden" style="font-size:0.8rem; color:var(--ink-soft); text-align:center;">
+      Not signed up yet? <a href="index.html" style="color: var(--forest);">Create your account on the main site</a> using your creator code, then come back here.
+    </p>
   </div>
 
   <!-- ADMIN CONTENT (hidden until authenticated) -->
@@ -190,6 +358,75 @@
           <div id="day-detail-empty" class="note">No bookings on this date.</div>
         </div>
 
+        <!-- Vivant workout schedule -->
+        <div class="vivant-section">
+          <div class="vivant-head">
+            <h3>My Vivant Workout Schedule</h3>
+            <div class="vivant-meta">
+              Live from <a href="https://www.vivantri.com/schedule" target="_blank" rel="noopener">vivantri.com</a>
+              · <button class="vivant-toggle" id="vivant-toggle">Hide</button>
+            </div>
+          </div>
+          <div class="vivant-frame-wrap" id="vivant-frame-wrap">
+            <iframe
+              src="https://app.arketa.co/iframe/vivant/calendar"
+              title="Vivant class schedule"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allow="payment"></iframe>
+          </div>
+
+          <!-- Quick block from workout -->
+          <div class="quick-block">
+            <h4>Block a workout time</h4>
+            <p class="hint">Glance at your Vivant calendar above, then enter the date and time range below to mark those slots unavailable for client bookings.</p>
+            <div class="row">
+              <div>
+                <label for="qb-date">Date</label>
+                <input type="date" id="qb-date" />
+              </div>
+              <div>
+                <label for="qb-start">Start</label>
+                <input type="time" id="qb-start" />
+              </div>
+              <div>
+                <label for="qb-end">End</label>
+                <input type="time" id="qb-end" />
+              </div>
+              <button class="btn-block" id="qb-submit">Block</button>
+            </div>
+            <p class="feedback" id="qb-feedback"></p>
+          </div>
+
+          <!-- Currently blocked workout slots -->
+          <div class="blocked-times-list">
+            <h4>Blocked time slots</h4>
+            <div id="blocked-times-container"></div>
+          </div>
+        </div>
+
+        <!-- Client accounts + password reset -->
+        <h3 class="bookings-title" style="margin-top:2rem;">Client Accounts</h3>
+        <p class="note">Reset a client's password if they forget it. They'll sign in with the temporary password and set their own.</p>
+        <div id="users-list" class="bookings-list"></div>
+
+        <!-- Temporary-password modal -->
+        <div id="temp-pw-overlay" class="auth-overlay hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:9999;">
+          <div style="background:#fff; padding:2rem; max-width:440px; width:90%; border:1px solid var(--border);">
+            <p class="eyebrow">Password Reset</p>
+            <h3 id="temp-pw-title" style="margin:.2rem 0 1rem;">Temporary password generated</h3>
+            <p style="font-size:0.92rem; color:var(--ink-soft);">Share this with the client. They should sign in with it and immediately set a new password from their account.</p>
+            <div style="background:var(--cream-dark); border:1px solid var(--border); padding:1rem; margin:1rem 0; text-align:center;">
+              <div style="font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft);">Temporary password</div>
+              <div id="temp-pw-value" style="font-family: 'Courier New', monospace; font-size:1.3rem; color:var(--forest); margin-top:.4rem; user-select:all;">—</div>
+            </div>
+            <div style="display:flex; gap:.6rem;">
+              <button class="btn" id="temp-pw-copy" style="flex:1;">Copy</button>
+              <button class="btn" id="temp-pw-close" style="flex:1; background:#fff; color:var(--forest); border:1px solid var(--forest);">Done</button>
+            </div>
+          </div>
+        </div>
+
         <!-- All bookings -->
         <h3 class="bookings-title" style="margin-top:2rem;">All Booking Requests</h3>
         <p class="note">Bookings are stored in this browser's localStorage. Export regularly to keep a backup.</p>
@@ -209,25 +446,64 @@
   <script>
     /* ============ ADMIN PAGE LOGIC ============ */
 
-    // Password gate
-    const pwInput = document.getElementById('admin-pw');
-    const loginBtn = document.getElementById('admin-login');
+    // Session-based gate — must be signed in with role === 'creator'
     const gate = document.getElementById('password-gate');
+    const gateMessage = document.getElementById('gate-message');
+    const gateHelp = document.getElementById('gate-help');
+    const signinForm = document.getElementById('admin-signin-form');
+    const signinError = document.getElementById('admin-signin-error');
     const content = document.getElementById('admin-content');
 
-    function tryLogin() {
-      if (pwInput.value === CONFIG.adminPassword) {
-        gate.classList.add('hidden');
-        content.classList.remove('hidden');
-        initAdmin();
-      } else {
-        alert('Incorrect password.');
-        pwInput.value = '';
-        pwInput.focus();
+    async function checkSession() {
+      try {
+        const r = await fetch('/api/me', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (data.user && data.user.role === 'creator') {
+          gate.classList.add('hidden');
+          content.classList.remove('hidden');
+          initAdmin();
+          return true;
+        }
+        if (data.user && data.user.role !== 'creator') {
+          gateMessage.textContent = 'This account does not have admin access. Sign out and sign in with your creator account.';
+          signinForm.classList.remove('hidden');
+        } else {
+          gateMessage.textContent = 'Sign in with your admin (creator) account.';
+          signinForm.classList.remove('hidden');
+          gateHelp.classList.remove('hidden');
+        }
+      } catch (e) {
+        gateMessage.textContent = 'Could not reach the server. Try refreshing.';
       }
+      return false;
     }
-    loginBtn.addEventListener('click', tryLogin);
-    pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+    signinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      signinError.textContent = '';
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-pw').value;
+      const r = await fetch('/api/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        signinError.textContent = data.error || 'Sign-in failed.';
+        return;
+      }
+      if (data.user.role !== 'creator') {
+        signinError.textContent = 'This account is not an admin. Sign in with your creator account.';
+        return;
+      }
+      gate.classList.add('hidden');
+      content.classList.remove('hidden');
+      initAdmin();
+    });
+
+    checkSession();
 
     // Admin state
     const adminMonth = { current: new Date() };
@@ -237,7 +513,88 @@
       renderAdminCal();
       renderAllBookings();
       renderStats();
+      renderUsers();
     }
+
+    /* ============ CLIENT ACCOUNTS / PASSWORD RESET ============ */
+    async function renderUsers() {
+      const list = document.getElementById('users-list');
+      list.innerHTML = '<p class="note">Loading client accounts…</p>';
+      try {
+        const r = await fetch('/api/admin/list-users', { credentials: 'same-origin' });
+        const data = await r.json();
+        if (!r.ok) {
+          list.innerHTML = `<p class="note" style="color:#8a3a1a;">${data.error || 'Could not load users.'}</p>`;
+          return;
+        }
+        const users = data.users || [];
+        if (users.length === 0) {
+          list.innerHTML = '<p class="note">No client accounts yet. Once people sign up on the main site, they\u2019ll appear here.</p>';
+          return;
+        }
+        list.innerHTML = '';
+        users.forEach(u => {
+          const item = document.createElement('div');
+          item.className = 'booking-item';
+          const created = new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const roleTag = u.role === 'creator'
+            ? '<span style="background:var(--gold); color:var(--forest); padding:.15rem .5rem; font-size:0.7rem; letter-spacing:.1em; text-transform:uppercase;">Admin</span>'
+            : '';
+          item.innerHTML = `
+            <div>
+              <div class="when"><strong>${escapeHtml(u.name)}</strong> ${roleTag}</div>
+              <div class="who">${escapeHtml(u.email)}${u.phone ? ' \u00b7 ' + escapeHtml(u.phone) : ''}</div>
+              <div style="font-size: 0.78rem; color: var(--ink-soft); margin-top: .3rem;">Joined ${created}</div>
+            </div>
+            <button class="delete" data-id="${u.id}" data-email="${escapeHtml(u.email)}" data-name="${escapeHtml(u.name)}" style="background:var(--forest); color:var(--cream);">Reset Password</button>
+          `;
+          list.appendChild(item);
+        });
+        list.querySelectorAll('button[data-id]').forEach(btn => {
+          btn.addEventListener('click', () => resetUserPassword(btn.dataset.id, btn.dataset.name, btn.dataset.email));
+        });
+      } catch (e) {
+        list.innerHTML = `<p class="note" style="color:#8a3a1a;">Network error: ${e.message}</p>`;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    async function resetUserPassword(userId, name, email) {
+      if (!confirm(`Reset password for ${name} (${email})? They'll need the temporary password to sign in next.`)) return;
+      const r = await fetch('/api/admin/reset-user-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ user_id: userId }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        alert(data.error || 'Could not reset password.');
+        return;
+      }
+      const overlay = document.getElementById('temp-pw-overlay');
+      const titleEl = document.getElementById('temp-pw-title');
+      const valueEl = document.getElementById('temp-pw-value');
+      titleEl.textContent = `Temporary password for ${data.user.name}`;
+      valueEl.textContent = data.temp_password;
+      overlay.classList.remove('hidden');
+    }
+
+    document.getElementById('temp-pw-copy').addEventListener('click', () => {
+      const pw = document.getElementById('temp-pw-value').textContent;
+      navigator.clipboard.writeText(pw).then(() => {
+        const btn = document.getElementById('temp-pw-copy');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+      });
+    });
+    document.getElementById('temp-pw-close').addEventListener('click', () => {
+      document.getElementById('temp-pw-overlay').classList.add('hidden');
+    });
 
     // Stats
     function renderStats() {
@@ -441,6 +798,111 @@
       link.href = URL.createObjectURL(blob);
       link.click();
     });
+
+    // Vivant schedule show/hide toggle (state persists in localStorage)
+    const vivantToggle = document.getElementById('vivant-toggle');
+    const vivantWrap = document.getElementById('vivant-frame-wrap');
+    const vivantHidden = localStorage.getItem('fbm_vivant_hidden') === '1';
+    if (vivantHidden) {
+      vivantWrap.style.display = 'none';
+      vivantToggle.textContent = 'Show';
+    }
+    vivantToggle.addEventListener('click', () => {
+      const isHidden = vivantWrap.style.display === 'none';
+      vivantWrap.style.display = isHidden ? 'block' : 'none';
+      vivantToggle.textContent = isHidden ? 'Hide' : 'Show';
+      localStorage.setItem('fbm_vivant_hidden', isHidden ? '0' : '1');
+    });
+
+    /* ============ QUICK-BLOCK FROM VIVANT WORKOUT ============ */
+    const qbDate = document.getElementById('qb-date');
+    const qbStart = document.getElementById('qb-start');
+    const qbEnd = document.getElementById('qb-end');
+    const qbSubmit = document.getElementById('qb-submit');
+    const qbFeedback = document.getElementById('qb-feedback');
+
+    // Default the date to today
+    qbDate.value = dateKey(new Date());
+
+    // Generate every 15-min slot label within [start, end), formatted to match formatTime() in script.js
+    function generateSlotsInRange(startHHMM, endHHMM) {
+      const [sh, sm] = startHHMM.split(':').map(Number);
+      const [eh, em] = endHHMM.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const out = [];
+      for (let m = startMin; m < endMin; m += 15) {
+        const h = Math.floor(m / 60);
+        const min = m % 60;
+        out.push(formatTime(h, min));
+      }
+      return out;
+    }
+
+    function setFeedback(msg, isError) {
+      qbFeedback.textContent = msg;
+      qbFeedback.classList.toggle('error', !!isError);
+    }
+
+    qbSubmit.addEventListener('click', () => {
+      const date = qbDate.value;
+      const start = qbStart.value;
+      const end = qbEnd.value;
+      if (!date || !start || !end) {
+        setFeedback('Pick a date, start time, and end time.', true);
+        return;
+      }
+      if (end <= start) {
+        setFeedback('End time must be after start time.', true);
+        return;
+      }
+      const slots = generateSlotsInRange(start, end);
+      slots.forEach(label => addBlockedTime(date, label));
+      const friendly = new Date(date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      setFeedback(`Blocked ${slots.length} slot${slots.length === 1 ? '' : 's'} on ${friendly}.`);
+      qbStart.value = '';
+      qbEnd.value = '';
+      renderBlockedTimes();
+      renderAdminCal();
+      renderStats();
+    });
+
+    // Render all currently blocked time slots, grouped by date
+    function renderBlockedTimes() {
+      const container = document.getElementById('blocked-times-container');
+      const all = getBlockedTimes();
+      const dates = Object.keys(all).sort();
+      if (dates.length === 0) {
+        container.innerHTML = '<p class="empty">No time slots blocked yet.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      dates.forEach(date => {
+        const slots = all[date];
+        if (!slots || slots.length === 0) return;
+        const friendly = new Date(date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        const row = document.createElement('div');
+        row.className = 'blocked-row';
+        row.innerHTML = `
+          <div class="when">
+            <div class="date">${friendly}</div>
+            <div class="slots">${slots.join(' · ')}</div>
+          </div>
+          <button data-date="${date}">Unblock</button>
+        `;
+        row.querySelector('button').addEventListener('click', () => {
+          if (!confirm(`Unblock all ${slots.length} slot(s) on ${friendly}?`)) return;
+          const obj = getBlockedTimes();
+          delete obj[date];
+          setBlockedTimes(obj);
+          renderBlockedTimes();
+          renderAdminCal();
+          renderStats();
+        });
+        container.appendChild(row);
+      });
+    }
+    renderBlockedTimes();
 
     // Override the init from script.js (don't run client-side init on admin page)
     // The script.js init() already ran, but that's fine — admin page doesn't have #client-view

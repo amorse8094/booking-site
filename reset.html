@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password · Floral Botanical Medicine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .reset-wrap {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .reset-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 2.4rem 2.2rem;
+      max-width: 440px;
+      width: 100%;
+    }
+    .reset-card h1 { margin: 0 0 .4rem; }
+    .reset-card p.lead { margin: 0 0 1.4rem; font-size: 0.92rem; color: var(--ink-soft); }
+    .reset-card label { display:block; margin-bottom: 1rem; }
+    .reset-card label span {
+      display:block;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: .3rem;
+    }
+    .reset-card input {
+      width: 100%;
+      padding: .7rem .8rem;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .reset-card input:focus { outline:none; border-color: var(--sage); }
+    .reset-card .msg { margin-top: 1rem; font-size: 0.9rem; }
+    .reset-card .msg.error { color: #8a3a1a; }
+    .reset-card .msg.success { color: var(--forest); }
+    .reset-card .btn { width: 100%; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container header-row">
+      <a href="index.html" class="brand">
+        <span class="brand-line">Floral Botanical Medicine</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="reset-wrap">
+    <div class="reset-card">
+      <p class="eyebrow">Account Recovery</p>
+      <h1>Reset your <em>password</em></h1>
+      <p class="lead">Enter a new password for your account. Must be at least 6 characters.</p>
+
+      <form id="reset-form">
+        <label>
+          <span>New Password</span>
+          <input type="password" name="password" minlength="6" required autofocus />
+        </label>
+        <label>
+          <span>Confirm Password</span>
+          <input type="password" name="confirm" minlength="6" required />
+        </label>
+        <button type="submit" class="btn">Set New Password</button>
+        <p id="reset-msg" class="msg"></p>
+      </form>
+
+      <div id="reset-missing-token" class="msg error hidden">
+        This reset link is missing or invalid. Please request a new one from the sign-in page.
+      </div>
+
+      <p style="margin-top:1.4rem; font-size:0.85rem;">
+        <a href="index.html" style="color: var(--forest);">← Back to home</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container center"><p>Floral Botanical Medicine</p></div>
+  </footer>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const form = document.getElementById('reset-form');
+    const msg = document.getElementById('reset-msg');
+    const missing = document.getElementById('reset-missing-token');
+
+    if (!token) {
+      form.style.display = 'none';
+      missing.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      msg.className = 'msg';
+      const fd = new FormData(form);
+      const password = fd.get('password');
+      const confirm = fd.get('confirm');
+      if (password !== confirm) {
+        msg.textContent = 'Passwords do not match.';
+        msg.classList.add('error');
+        return;
+      }
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'Setting…';
+      try {
+        const r = await fetch('/api/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          msg.textContent = data.error || 'Something went wrong.';
+          msg.classList.add('error');
+          btn.disabled = false;
+          btn.textContent = 'Set New Password';
+          return;
+        }
+        msg.textContent = 'Password updated. Redirecting…';
+        msg.classList.add('success');
+        setTimeout(() => { location.href = 'index.html'; }, 1200);
+      } catch (err) {
+        msg.textContent = 'Network error. Try again.';
+        msg.classList.add('error');
+        btn.disabled = false;
+        btn.textContent = 'Set New Password';
+      }
+    });
+  </script>
+</body>
+</html>

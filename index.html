@@ -240,7 +240,26 @@
           <p class="auth-error hidden" id="signin-error"></p>
           <button type="submit" class="btn" style="width:100%;">Sign In</button>
         </form>
+        <p class="auth-switch" style="margin-top: .6rem;">
+          <button class="btn-link" id="show-forgot">Forgot your password?</button>
+        </p>
         <p class="auth-switch">Don't have an account? <button class="btn-link" id="show-signup">Create one</button></p>
+      </div>
+
+      <!-- FORGOT PASSWORD TAB -->
+      <div id="auth-forgot" class="auth-tab hidden">
+        <p class="eyebrow">Account Recovery</p>
+        <h2>Reset your <em>password</em></h2>
+        <p style="font-size:0.9rem; color: var(--ink-soft); margin-bottom: 1.2rem;">Enter the email you used to create your account. We'll send you a link to set a new password.</p>
+        <form id="forgot-form" class="auth-form">
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" required />
+          </label>
+          <button type="submit" class="btn" style="width:100%;">Send reset link</button>
+          <p id="forgot-msg" class="auth-msg hidden"></p>
+        </form>
+        <p class="auth-switch">Remembered it? <button class="btn-link" id="forgot-back">Back to sign in</button></p>
       </div>
 
       <!-- SIGN UP TAB -->
@@ -290,6 +309,26 @@
       <h2>My <em>Appointments</em></h2>
       <p id="member-greeting" style="margin-bottom:1.6rem;"></p>
       <div id="my-appts-list"></div>
+
+      <details style="margin-top:2rem; border-top:1px solid var(--border); padding-top:1.2rem;">
+        <summary style="cursor:pointer; font-size:0.9rem; color:var(--ink-soft); letter-spacing:0.06em;">Change my password</summary>
+        <form id="change-pw-form" class="auth-form" style="margin-top:1rem;">
+          <label>
+            <span>Current password</span>
+            <input type="password" name="current_password" required />
+          </label>
+          <label>
+            <span>New password</span>
+            <input type="password" name="new_password" minlength="6" required />
+          </label>
+          <label>
+            <span>Confirm new password</span>
+            <input type="password" name="confirm_password" minlength="6" required />
+          </label>
+          <button type="submit" class="btn" style="width:100%;">Update password</button>
+          <p id="change-pw-msg" class="auth-msg hidden"></p>
+        </form>
+      </details>
     </div>
   </div>
 
