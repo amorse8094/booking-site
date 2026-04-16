@@ -1,10 +1,7 @@
 const { query } = require('../_lib/db');
-const { requireAdmin, hashPassword, randomToken } = require('../_lib/auth');
+const { requireAdmin, randomToken, sha256 } = require('../_lib/auth');
+const { sendPasswordReset } = require('../_lib/email');
 const { readJson, json } = require('../_lib/body');
-
-function friendlyTempPassword() {
-  return randomToken(8).replace(/[-_]/g, '').slice(0, 10);
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
@@ -18,14 +15,37 @@ module.exports = async (req, res) => {
     if (r.rowCount === 0) return json(res, 404, { error: 'user not found' });
     const user = r.rows[0];
 
-    const tempPassword = friendlyTempPassword();
-    const hash = await hashPassword(tempPassword);
-    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, user.id]);
+    if (!process.env.RESEND_API_KEY) {
+      return json(res, 503, {
+        error: 'Email is not enabled. Set RESEND_API_KEY in Vercel to send reset links.',
+      });
+    }
+
+    const token = randomToken(32);
+    const tokenHash = sha256(token);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
     await query('DELETE FROM password_reset_tokens WHERE user_id = $1', [user.id]);
+    await query(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [user.id, tokenHash, expiresAt]
+    );
+
+    const origin = process.env.APP_URL
+      || (req.headers['x-forwarded-proto'] && req.headers.host
+          ? `${req.headers['x-forwarded-proto']}://${req.headers.host}`
+          : `https://${req.headers.host}`);
+    const resetUrl = `${origin}/reset.html?token=${encodeURIComponent(token)}`;
+
+    try {
+      await sendPasswordReset({ to: user.email, name: user.name, resetUrl });
+    } catch (e) {
+      return json(res, 500, { error: 'Could not send email: ' + e.message });
+    }
 
     return json(res, 200, {
+      ok: true,
       user: { id: user.id, email: user.email, name: user.name },
-      temp_password: tempPassword,
     });
   } catch (e) {
     return json(res, 500, { error: e.message });

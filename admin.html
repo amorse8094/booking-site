@@ -407,22 +407,21 @@
 
         <!-- Client accounts + password reset -->
         <h3 class="bookings-title" style="margin-top:2rem;">Client Accounts</h3>
-        <p class="note">Reset a client's password if they forget it. They'll sign in with the temporary password and set their own.</p>
+        <p class="note">Reset a client's password if they forget it. They'll receive an email with a secure link to set a new one. The link expires after one hour.</p>
         <div id="users-list" class="bookings-list"></div>
 
-        <!-- Temporary-password modal -->
+        <!-- Reset-link-sent modal -->
         <div id="temp-pw-overlay" class="auth-overlay hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:9999;">
           <div style="background:#fff; padding:2rem; max-width:440px; width:90%; border:1px solid var(--border);">
             <p class="eyebrow">Password Reset</p>
-            <h3 id="temp-pw-title" style="margin:.2rem 0 1rem;">Temporary password generated</h3>
-            <p style="font-size:0.92rem; color:var(--ink-soft);">Share this with the client. They should sign in with it and immediately set a new password from their account.</p>
+            <h3 id="temp-pw-title" style="margin:.2rem 0 1rem;">Reset link sent</h3>
+            <p style="font-size:0.92rem; color:var(--ink-soft);">An email with a secure password-reset link has been sent. The link is valid for one hour.</p>
             <div style="background:var(--cream-dark); border:1px solid var(--border); padding:1rem; margin:1rem 0; text-align:center;">
-              <div style="font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft);">Temporary password</div>
-              <div id="temp-pw-value" style="font-family: 'Courier New', monospace; font-size:1.3rem; color:var(--forest); margin-top:.4rem; user-select:all;">—</div>
+              <div style="font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft);">Sent to</div>
+              <div id="temp-pw-value" style="font-family: 'Courier New', monospace; font-size:1rem; color:var(--forest); margin-top:.4rem; user-select:all; word-break:break-all;">—</div>
             </div>
             <div style="display:flex; gap:.6rem;">
-              <button class="btn" id="temp-pw-copy" style="flex:1;">Copy</button>
-              <button class="btn" id="temp-pw-close" style="flex:1; background:#fff; color:var(--forest); border:1px solid var(--forest);">Done</button>
+              <button class="btn" id="temp-pw-close" style="flex:1;">Done</button>
             </div>
           </div>
         </div>
@@ -563,7 +562,7 @@
     }
 
     async function resetUserPassword(userId, name, email) {
-      if (!confirm(`Reset password for ${name} (${email})? They'll need the temporary password to sign in next.`)) return;
+      if (!confirm(`Send a password-reset email to ${name} (${email})? They'll receive a secure link valid for one hour.`)) return;
       const r = await fetch('/api/admin/reset-user-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -572,26 +571,17 @@
       });
       const data = await r.json();
       if (!r.ok) {
-        alert(data.error || 'Could not reset password.');
+        alert(data.error || 'Could not send reset email.');
         return;
       }
       const overlay = document.getElementById('temp-pw-overlay');
       const titleEl = document.getElementById('temp-pw-title');
       const valueEl = document.getElementById('temp-pw-value');
-      titleEl.textContent = `Temporary password for ${data.user.name}`;
-      valueEl.textContent = data.temp_password;
+      titleEl.textContent = `Reset link sent to ${data.user.name}`;
+      valueEl.textContent = data.user.email;
       overlay.classList.remove('hidden');
     }
 
-    document.getElementById('temp-pw-copy').addEventListener('click', () => {
-      const pw = document.getElementById('temp-pw-value').textContent;
-      navigator.clipboard.writeText(pw).then(() => {
-        const btn = document.getElementById('temp-pw-copy');
-        const original = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = original; }, 1500);
-      });
-    });
     document.getElementById('temp-pw-close').addEventListener('click', () => {
       document.getElementById('temp-pw-overlay').classList.add('hidden');
     });
@@ -743,7 +733,7 @@
         item.innerHTML = `
           <div>
             <div class="when">${b.date} · ${b.time}</div>
-            <div class="who"><strong>${b.name}</strong> — ${b.service} · $${b.price || '—'}</div>
+            <div class="who"><strong>${b.name}</strong> — ${b.service} · ${b.priceDisplay || (b.price ? '$' + b.price : '—')}</div>
             <div style="font-size: 0.85rem; color: var(--ink-soft); margin-top: .3rem;">
               ${b.email}${b.phone ? ' · ' + b.phone : ''}
             </div>
